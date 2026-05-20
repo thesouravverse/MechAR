@@ -19,8 +19,12 @@
         android:theme="@style/Theme.MechAR"
         tools:targetApi="34">
 
-        <!-- ARCore: app will not install on phones without ARCore support -->
-        <meta-data android:name="com.google.ar.core" android:value="required" />
+        <!-- ARCore: app will not install on phones without ARCore support.
+             SceneView declares this as "optional"; we override to "required". -->
+        <meta-data
+            android:name="com.google.ar.core"
+            android:value="required"
+            tools:replace="android:value" />
 
         <activity
             android:name=".MainActivity"
