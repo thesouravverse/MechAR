@@ -28,3 +28,13 @@ artifact/
 ABB/
 *.aab
 *.apk
+
+# Source 3D files (only mech.glb in app/src/main/assets/models/ is shipped)
+/models/
+*.blend
+*.blend1
+*.fbx
+*.obj
+*.c4d
+*.rar
+*.zip
