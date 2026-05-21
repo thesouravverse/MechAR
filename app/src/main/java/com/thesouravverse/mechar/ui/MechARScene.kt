@@ -1,6 +1,5 @@
 package com.thesouravverse.mechar.ui
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,9 +18,7 @@ import io.github.sceneview.ar.arcore.isValid
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.ar.rememberARCameraNode
 import io.github.sceneview.loaders.MaterialLoader
-import io.github.sceneview.loaders.ModelLoader
 import io.github.sceneview.node.CubeNode
-import io.github.sceneview.node.ModelNode
 import io.github.sceneview.node.Node
 import io.github.sceneview.rememberCollisionSystem
 import io.github.sceneview.rememberEngine
@@ -31,15 +28,9 @@ import io.github.sceneview.rememberNodes
 import io.github.sceneview.rememberOnGestureListener
 import io.github.sceneview.rememberView
 
-private const val TAG = "MechARScene"
-
-/** Asset path inside `app/src/main/assets/`. If the file is missing the
- *  scene falls back to a coloured cube so the app still works. */
-private const val MECH_MODEL_PATH = "models/mech.glb"
-
-/** Physical size (metres) used for the fallback cube AND as the
- *  authoritative scale of the mech.  ~30 cm wide × 70 cm tall. */
-private val MECH_SIZE = Float3(0.3f, 0.7f, 0.3f)
+/** Physical size of the mech cube in metres. Small (~15 cm) so it's
+ *  easy to test on a desk or floor without huge room requirements. */
+private val MECH_SIZE = Float3(0.15f, 0.15f, 0.15f)
 
 @Composable
 fun MechARScene(
@@ -115,9 +106,8 @@ fun MechARScene(
                         isEditable = false
                     }
 
-                    val mechVisual = createMechVisual(
+                    val mechVisual = createMechCube(
                         engine = engine,
-                        modelLoader = modelLoader,
                         materialLoader = materialLoader
                     )
                     anchorNode.addChildNode(mechVisual)
@@ -142,34 +132,21 @@ private fun Node.belongsTo(target: Node?): Boolean {
     return false
 }
 
-/** Try to load the mech glb; fall back to a coloured cube so v1 ships
- *  even before you drop a real model into assets/. */
-private fun createMechVisual(
+/** Simple coloured cube — v1 target dummy. Replace with real models later. */
+private fun createMechCube(
     engine: Engine,
-    modelLoader: ModelLoader,
     materialLoader: MaterialLoader
 ): Node {
-    return runCatching {
-        val instance = modelLoader.createModelInstance(MECH_MODEL_PATH)
-        ModelNode(
-            modelInstance = instance,
-            scaleToUnits = MECH_SIZE.y // scale so model's biggest dim ≈ mech height
-        ).apply {
-            isEditable = false
-        } as Node
-    }.getOrElse { t ->
-        Log.w(TAG, "mech.glb not found, falling back to cube: ${t.message}")
-        val mat = materialLoader.createColorInstance(
-            color = dev.romainguy.kotlin.math.Float4(0.85f, 0.18f, 0.32f, 1f),
-            metallic = 0.6f,
-            roughness = 0.35f,
-            reflectance = 0.5f
-        )
-        CubeNode(
-            engine = engine,
-            size = MECH_SIZE,
-            center = Float3(0f, MECH_SIZE.y / 2f, 0f), // sit on the floor
-            materialInstance = mat
-        )
-    }
+    val mat = materialLoader.createColorInstance(
+        color = dev.romainguy.kotlin.math.Float4(0.85f, 0.18f, 0.32f, 1f),
+        metallic = 0.6f,
+        roughness = 0.35f,
+        reflectance = 0.5f
+    )
+    return CubeNode(
+        engine = engine,
+        size = MECH_SIZE,
+        center = Float3(0f, MECH_SIZE.y / 2f, 0f), // sit on the floor
+        materialInstance = mat
+    )
 }
