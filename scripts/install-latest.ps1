@@ -32,12 +32,16 @@ New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
 $existing = Get-ChildItem $artifactRoot -Directory -Filter "MechAR-debug-apk_v*" -ErrorAction SilentlyContinue
 $maxVer = 0
 if ($existing) {
-    $maxVer = ($existing | ForEach-Object {
-        [int]([regex]::Match($_.Name, '_v(\d+)$').Groups[1].Value)
-    } | Measure-Object -Maximum).Maximum
+    foreach ($d in $existing) {
+        $m = [regex]::Match($d.Name, '_v(\d+)$')
+        if ($m.Success) {
+            $n = [int]$m.Groups[1].Value
+            if ($n -gt $maxVer) { $maxVer = $n }
+        }
+    }
 }
-$nextVer = $maxVer + 1
-$verPad  = "{0:D2}" -f $nextVer
+$nextVer = [int]$maxVer + 1
+$verPad  = $nextVer.ToString("D2")
 $destDir = Join-Path $artifactRoot ("MechAR-debug-apk_v" + $verPad)
 New-Item -ItemType Directory -Force -Path $destDir | Out-Null
 Step "Staging into $destDir"
