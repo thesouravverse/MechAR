@@ -6,13 +6,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+enum class MechShape(val label: String) {
+    CUBE("CUBE"),
+    SPHERE("SPHERE"),
+    CYLINDER("CYL")
+}
+
 data class GameUiState(
     val mechPlaced: Boolean = false,
     val mechHp: Int = MAX_HP,
     val score: Int = 0,
     val cubeSizeCm: Int = DEFAULT_SIZE_CM,
     val sizeLocked: Boolean = false,
-    val hint: String = "Adjust size with - / + . Tap floor to deploy."
+    val shape: MechShape = MechShape.CUBE,
+    val hint: String = "Pick shape + size. Tap floor to deploy."
 ) {
     companion object {
         const val MAX_HP = 100
@@ -94,5 +101,19 @@ class GameViewModel : ViewModel() {
 
     fun reset() {
         _state.value = GameUiState()
+    }
+
+    fun cycleShape() {
+        _state.update { s ->
+            // Changing shape while one is placed → despawn so the new shape can be deployed
+            val values = MechShape.values()
+            val next = values[(s.shape.ordinal + 1) % values.size]
+            s.copy(
+                shape = next,
+                mechPlaced = false,
+                mechHp = GameUiState.MAX_HP,
+                hint = "Shape: ${next.label}. Tap floor to deploy."
+            )
+        }
     }
 }

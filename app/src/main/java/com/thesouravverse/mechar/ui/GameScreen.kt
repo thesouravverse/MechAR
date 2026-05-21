@@ -69,16 +69,25 @@ fun GameScreen(
         }
 
         // --- Bottom size controls ---
-        SizeControls(
-            sizeCm = state.cubeSizeCm,
-            locked = state.sizeLocked,
-            onMinus = vm::decreaseSize,
-            onPlus = vm::increaseSize,
-            onToggleLock = vm::toggleLock,
-            modifier = Modifier
+        Column(
+            Modifier
                 .align(Alignment.BottomCenter)
-                .padding(24.dp)
-        )
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ShapeRow(
+                shape = state.shape,
+                onCycle = vm::cycleShape
+            )
+            SizeControls(
+                sizeCm = state.cubeSizeCm,
+                locked = state.sizeLocked,
+                onMinus = vm::decreaseSize,
+                onPlus = vm::increaseSize,
+                onToggleLock = vm::toggleLock
+            )
+        }
     }
 }
 
@@ -130,6 +139,26 @@ private fun HpBar(hp: Int, maxHp: Int) {
                     )
             )
         }
+    }
+}
+
+@Composable
+private fun ShapeRow(
+    shape: MechShape,
+    onCycle: () -> Unit
+) {
+    Button(
+        onClick = onCycle,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Black.copy(alpha = 0.65f)
+        )
+    ) {
+        Text(
+            "SHAPE: ${shape.label}  \u21BB",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp
+        )
     }
 }
 

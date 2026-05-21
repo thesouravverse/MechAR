@@ -19,7 +19,9 @@ import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.ar.rememberARCameraNode
 import io.github.sceneview.loaders.MaterialLoader
 import io.github.sceneview.node.CubeNode
+import io.github.sceneview.node.CylinderNode
 import io.github.sceneview.node.Node
+import io.github.sceneview.node.SphereNode
 import io.github.sceneview.rememberCollisionSystem
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberMaterialLoader
@@ -113,9 +115,10 @@ fun MechARScene(
                         isEditable = false
                     }
 
-                    val mechVisual = createMechCube(
+                    val mechVisual = createMechShape(
                         engine = engine,
-                        materialLoader = materialLoader
+                        materialLoader = materialLoader,
+                        shape = state.shape
                     )
                     applySize(mechVisual, state.cubeSizeCm)
                     anchorNode.addChildNode(mechVisual)
@@ -141,10 +144,11 @@ private fun Node.belongsTo(target: Node?): Boolean {
     return false
 }
 
-/** Simple coloured cube — v1 target dummy. Geometry baked at 1 m, scaled at runtime. */
-private fun createMechCube(
+/** Spawn the requested primitive. All shapes are built at 1 m and scaled at runtime. */
+private fun createMechShape(
     engine: Engine,
-    materialLoader: MaterialLoader
+    materialLoader: MaterialLoader,
+    shape: MechShape
 ): Node {
     val mat = materialLoader.createColorInstance(
         color = dev.romainguy.kotlin.math.Float4(0.85f, 0.18f, 0.32f, 1f),
@@ -152,13 +156,27 @@ private fun createMechCube(
         roughness = 0.35f,
         reflectance = 0.5f
     )
-    return CubeNode(
-        engine = engine,
-        size = BASE_CUBE,
-        // sit on the floor: bottom of cube at y=0 in local (unscaled) space
-        center = Float3(0f, BASE_CUBE.y / 2f, 0f),
-        materialInstance = mat
-    )
+    return when (shape) {
+        MechShape.CUBE -> CubeNode(
+            engine = engine,
+            size = BASE_CUBE,
+            center = Float3(0f, BASE_CUBE.y / 2f, 0f), // sit on floor
+            materialInstance = mat
+        )
+        MechShape.SPHERE -> SphereNode(
+            engine = engine,
+            radius = 0.5f,
+            center = Float3(0f, 0.5f, 0f), // bottom of sphere touches floor
+            materialInstance = mat
+        )
+        MechShape.CYLINDER -> CylinderNode(
+            engine = engine,
+            radius = 0.5f,
+            height = 1f,
+            center = Float3(0f, 0.5f, 0f), // sit on floor
+            materialInstance = mat
+        )
+    }
 }
 
 /** Apply a uniform scale to the cube so its world size is [sizeCm] cm. */
