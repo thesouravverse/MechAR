@@ -28,9 +28,9 @@ import io.github.sceneview.rememberNodes
 import io.github.sceneview.rememberOnGestureListener
 import io.github.sceneview.rememberView
 
-/** Physical size of the mech cube in metres. Small (~15 cm) so it's
- *  easy to test on a desk or floor without huge room requirements. */
-private val MECH_SIZE = Float3(0.15f, 0.15f, 0.15f)
+/** Base geometry size in metres. The cube is created at 1 m and then
+ *  scaled at runtime via [Node.scale] so resize is cheap and live. */
+private val BASE_CUBE = Float3(1f, 1f, 1f)
 
 @Composable
 fun MechARScene(
@@ -50,7 +50,13 @@ fun MechARScene(
     var frame by remember { mutableStateOf<Frame?>(null) }
     var planeRenderer by remember { mutableStateOf(true) }
     var mechAnchorNode by remember { mutableStateOf<AnchorNode?>(null) }
+    var mechCubeNode by remember { mutableStateOf<Node?>(null) }
     var trackingFailure by remember { mutableStateOf<TrackingFailureReason?>(null) }
+
+    // Live-resize: whenever the requested size changes, rescale the cube.
+    LaunchedEffect(state.cubeSizeCm) {
+        mechCubeNode?.let { applySize(it, state.cubeSizeCm) }
+    }
 
     // Despawn the mech node if game state says it's gone (e.g. killed).
     LaunchedEffect(state.mechPlaced) {
@@ -60,6 +66,7 @@ fun MechARScene(
                 node.destroy()
             }
             mechAnchorNode = null
+            mechCubeNode = null
             planeRenderer = true
         }
     }
@@ -110,9 +117,11 @@ fun MechARScene(
                         engine = engine,
                         materialLoader = materialLoader
                     )
+                    applySize(mechVisual, state.cubeSizeCm)
                     anchorNode.addChildNode(mechVisual)
                     childNodes.add(anchorNode)
                     mechAnchorNode = anchorNode
+                    mechCubeNode = mechVisual
                     planeRenderer = false
                     onMechPlaced()
                 }
@@ -132,7 +141,7 @@ private fun Node.belongsTo(target: Node?): Boolean {
     return false
 }
 
-/** Simple coloured cube — v1 target dummy. Replace with real models later. */
+/** Simple coloured cube — v1 target dummy. Geometry baked at 1 m, scaled at runtime. */
 private fun createMechCube(
     engine: Engine,
     materialLoader: MaterialLoader
@@ -145,8 +154,15 @@ private fun createMechCube(
     )
     return CubeNode(
         engine = engine,
-        size = MECH_SIZE,
-        center = Float3(0f, MECH_SIZE.y / 2f, 0f), // sit on the floor
+        size = BASE_CUBE,
+        // sit on the floor: bottom of cube at y=0 in local (unscaled) space
+        center = Float3(0f, BASE_CUBE.y / 2f, 0f),
         materialInstance = mat
     )
+}
+
+/** Apply a uniform scale to the cube so its world size is [sizeCm] cm. */
+private fun applySize(node: Node, sizeCm: Int) {
+    val s = sizeCm / 100f
+    node.scale = Float3(s, s, s)
 }

@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,10 +47,11 @@ fun GameScreen(
             modifier = Modifier.fillMaxSize()
         )
 
-        // --- HUD overlay ---
+        // --- Top HUD ---
         Column(
             Modifier
                 .fillMaxWidth()
+                .align(Alignment.TopCenter)
                 .padding(16.dp)
         ) {
             Row(
@@ -64,6 +67,18 @@ fun GameScreen(
             Spacer(Modifier.height(12.dp))
             HudBadge(text = state.hint)
         }
+
+        // --- Bottom size controls ---
+        SizeControls(
+            sizeCm = state.cubeSizeCm,
+            locked = state.sizeLocked,
+            onMinus = vm::decreaseSize,
+            onPlus = vm::increaseSize,
+            onToggleLock = vm::toggleLock,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(24.dp)
+        )
     }
 }
 
@@ -114,6 +129,73 @@ private fun HpBar(hp: Int, maxHp: Int) {
                         }
                     )
             )
+        }
+    }
+}
+
+@Composable
+private fun SizeControls(
+    sizeCm: Int,
+    locked: Boolean,
+    onMinus: () -> Unit,
+    onPlus: () -> Unit,
+    onToggleLock: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircleBtn(label = "-", enabled = !locked, onClick = onMinus)
+        Box(
+            Modifier
+                .clip(RoundedCornerShape(50))
+                .background(Color.Black.copy(alpha = 0.65f))
+                .padding(horizontal = 18.dp, vertical = 12.dp)
+        ) {
+            Text(
+                "${sizeCm} cm",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+        }
+        CircleBtn(label = "+", enabled = !locked, onClick = onPlus)
+        Spacer(Modifier.width(8.dp))
+        Button(
+            onClick = onToggleLock,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (locked) Color(0xFF22D67A) else Color(0xFF3469FF)
+            )
+        ) {
+            Text(if (locked) "UNLOCK" else "LOCK", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun CircleBtn(label: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(56.dp)
+            .clip(CircleShape)
+            .background(
+                if (enabled) Color.Black.copy(alpha = 0.65f)
+                else Color.Black.copy(alpha = 0.30f)
+            )
+    ) {
+        Button(
+            onClick = onClick,
+            enabled = enabled,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent
+            ),
+            contentPadding = PaddingValues(0.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(label, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
